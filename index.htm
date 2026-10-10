@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Hall of Reflection — Sacred Exhibition of Stillness</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --breath-duration: 8s; /* 4s inhale, 4s exhale */
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #05060b;
+      color: #e2e8f0;
+      overflow-x: hidden;
+      selection-background-color: #4338ca;
+    }
+
+    .font-cinzel {
+      font-family: 'Cinzel', serif;
+    }
+
+    /* Subtle starry cosmic background canvas */
+    #ambient-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+
+    /* Synchronized Breathing Pulse */
+    @keyframes breathingGlow {
+      0%, 100% {
+        transform: scale(0.98);
+        filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.25));
+        opacity: 0.75;
+      }
+      50% {
+        transform: scale(1.03);
+        filter: drop-shadow(0 0 35px rgba(245, 158, 11, 0.55)) drop-shadow(0 0 70px rgba(99, 102, 241, 0.4));
+        opacity: 1;
+      }
+    }
+
+    .breathing-pulse {
+      animation: breathingGlow var(--breath-duration) ease-in-out infinite;
+    }
+
+    /* Ambient bloom on interactive cards */
+    .art-card {
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease, border-color 0.5s ease;
+      touch-action: manipulation;
+    }
+
+    .art-card:hover, .art-card.active-hold {
+      transform: translateY(-6px) scale(1.015);
+      border-color: rgba(212, 175, 55, 0.5);
+      box-shadow: 0 20px 45px -10px rgba(99, 102, 241, 0.35), 0 0 30px rgba(245, 158, 11, 0.25);
+    }
+
+    .art-card .image-glow {
+      transition: opacity 0.7s ease, filter 0.7s ease;
+    }
+
+    .art-card:hover .image-glow, .art-card.active-hold .image-glow {
+      filter: brightness(1.15) contrast(1.08) drop-shadow(0 0 25px rgba(251, 191, 36, 0.35));
+    }
+
+    /* Custom smooth scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #05060b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e1b4b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4338ca;
+    }
+  </style>
+</head>
+<body class="relative min-h-screen">
+  <canvas id="ambient-canvas"></canvas>
+
+  <div class="relative z-10 flex flex-col min-h-screen">
+    <!-- Top Navigation & Audio Control Bar -->
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-[#05060b]/80 border-b border-indigo-950/60 px-6 py-4 transition-all">
+      <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full border border-amber-300/40 flex items-center justify-center bg-indigo-950/40 shadow-[0_0_15px_rgba(251,191,36,0.25)]">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-200 animate-ping"></span>
+          </div>
+          <div>
+            <span class="font-cinzel text-sm sm:text-base tracking-[0.25em] text-amber-100 font-semibold uppercase">The Hall of Reflection</span>
+            <p class="text-[10px] text-slate-400 tracking-wider">SACRED EXHIBITION OF AWAKENING</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <!-- Audio Toggle Button -->
+          <button id="audio-toggle" class="group flex items-center space-x-2 px-3.5 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-950/40 text-xs text-indigo-200 hover:border-amber-400/50 hover:text-amber-100 transition-all shadow-sm">
+            <svg id="audio-icon-off" class="w-4 h-4 text-slate-400 group-hover:text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+            </svg>
+            <svg id="audio-icon-on" class="w-4 h-4 text-amber-300 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+            </svg>
+            <span id="audio-label" class="tracking-widest">432Hz HARMONIC: MUTED</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <p class="font-cinzel text-xs tracking-[0.35em] text-amber-300/80 uppercase">Beyond The Simulation</p>
+        <h1 class="font-cinzel text-3xl sm:text-5xl font-light text-slate-100 tracking-tight leading-tight">
+          Where Code Dissolves into <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-indigo-200 to-amber-300 font-normal">Stillness</span>
+        </h1>
+        <p class="text-sm sm:text-base text-slate-400 font-light leading-relaxed">
+          Hover or touch and hold each composition. As you synchronize your breath with the 8-second eternal pulse, the binaural frequency blooms to restore your sovereign presence.
+        </p>
+        <div class="inline-flex items-center space-x-2 text-xs text-indigo-300/80 bg-indigo-950/30 border border-indigo-800/40 px-3 py-1.5 rounded-full mt-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Touch & Hold: Amplify Resonance & Visual Radiance</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-24" id="gallery-grid">
+        <!-- Card 1 -->
+        <article class="art-card group relative rounded-2xl bg-slate-900/40 border border-slate-800/80 overflow-hidden flex flex-col justify-between"
+                 data-freq="432" data-title="The Sovereign Observer" data-reflection="The world constantly demands that you act as a projector for its anxieties. What part of your quiet consciousness has remained completely untouched by circumstance?">
+          <div class="relative aspect-video overflow-hidden bg-slate-950">
+            <div class="absolute inset-0 bg-cover bg-center image-glow group-hover:scale-105 transition-transform duration-700" 
+                 style="background-image: url('watermarked_img_15840732261253390938.jpg'); background-color: #0f172a;">
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
+            <div class="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-medium tracking-wider uppercase bg-black/60 border border-indigo-400/30 text-indigo-200 backdrop-blur-md">
+              Artifact I
+            </div>
+          </div>
+          <div class="p-6 flex flex-col flex-grow justify-between space-y-4">
+            <div>
+              <h2 class="font-cinzel text-lg text-slate-100 font-medium tracking-wide">The Sovereign Observer</h2>
+              <blockquote class="mt-2 text-sm italic text-amber-200/90 font-light leading-snug border-l-2 border-amber-400/40 pl-3">
+                “The machine reflects what was programmed; the mirror reflects what is eternal.”
+              </blockquote>
+            </div>
+            <div class="pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs">
+              <span class="text-slate-500 tracking-wider">THEME: CONSCIOUS MIRROR</span>
+              <button class="open-modal text-amber-300 hover:text-amber-100 flex items-center space-x-1 font-medium transition-colors">
+                <span>Contemplate</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="art-card group relative rounded-2xl bg-slate-900/40 border border-slate-800/80 overflow-hidden flex flex-col justify-between"
+                 data-freq="528" data-title="The Code of Biological Memory" data-reflection="Every strand within you carries the unbroken record of stars, ancestors, and light. When you breathe softly, you harmonize with the universe that authored you.">
+          <div class="relative aspect-video overflow-hidden bg-slate-950">
+            <div class="absolute inset-0 bg-cover bg-center image-glow group-hover:scale-105 transition-transform duration-700" 
+                 style="background-image: url('watermarked_img_12529451284965095757.jpg'); background-color: #0f172a;">
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
+            <div class="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-medium tracking-wider uppercase bg-black/60 border border-indigo-400/30 text-indigo-200 backdrop-blur-md">
+              Artifact II
+            </div>
+          </div>
+          <div class="p-6 flex flex-col flex-grow justify-between space-y-4">
+            <div>
+              <h2 class="font-cinzel text-lg text-slate-100 font-medium tracking-wide">The Code of Biological Memory</h2>
+              <blockquote class="mt-2 text-sm italic text-amber-200/90 font-light leading-snug border-l-2 border-amber-400/40 pl-3">
+                “Your biology is not just flesh; it is an unbroken transmission from the first breath of the cosmos.”
+              </blockquote>
+            </div>
+            <div class="pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs">
+              <span class="text-slate-500 tracking-wider">THEME: CELESTIAL DNA</span>
+              <button class="open-modal text-amber-300 hover:text-amber-100 flex items-center space-x-1 font-medium transition-colors">
+                <span>Contemplate</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 3 -->
+        <article class="art-card group relative rounded-2xl bg-slate-900/40 border border-slate-800/80 overflow-hidden flex flex-col justify-between"
+                 data-freq="396" data-title="The Sanctuary of Stillness" data-reflection="The cosmic storm only has power over what resists it. Can you recognize that peace is not an island waiting to be discovered, but an internal posture you bestow?">
+          <div class="relative aspect-video overflow-hidden bg-slate-950">
+            <div class="absolute inset-0 bg-cover bg-center image-glow group-hover:scale-105 transition-transform duration-700" 
+                 style="background-image: url('watermarked_img_7733768710565395407.jpg'); background-color: #0f172a;">
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
+            <div class="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-medium tracking-wider uppercase bg-black/60 border border-indigo-400/30 text-indigo-200 backdrop-blur-md">
+              Artifact III
+            </div>
+          </div>
+          <div class="p-6 flex flex-col flex-grow justify-between space-y-4">
+            <div>
+              <h2 class="font-cinzel text-lg text-slate-100 font-medium tracking-wide">The Sanctuary of Stillness</h2>
+              <blockquote class="mt-2 text-sm italic text-amber-200/90 font-light leading-snug border-l-2 border-amber-400/40 pl-3">
+                “Peace is not a place we find, but a stillness we bring with us.”
+              </blockquote>
+            </div>
+            <div class="pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs">
+              <span class="text-slate-500 tracking-wider">THEME: INNER OASIS</span>
+              <button class="open-modal text-amber-300 hover:text-amber-100 flex items-center space-x-1 font-medium transition-colors">
+                <span>Contemplate</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 4 -->
+        <article class="art-card group relative rounded-2xl bg-slate-900/40 border border-slate-800/80 overflow-hidden flex flex-col justify-between"
+                 data-freq="639" data-title="The Awakening Sprout" data-reflection="The damp earth and thick mist hid everything that came before. From this pristine, quiet silence, what new beginning will you ignite with this breath?">
+          <div class="relative aspect-video overflow-hidden bg-slate-950">
+            <div class="absolute inset-0 bg-cover bg-center image-glow group-hover:scale-105 transition-transform duration-700" 
+                 style="background-image: url('watermarked_img_12580461782905069787.jpg'); background-color: #0f172a;">
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
+            <div class="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-medium tracking-wider uppercase bg-black/60 border border-indigo-400/30 text-indigo-200 backdrop-blur-md">
+              Artifact IV
+            </div>
+          </div>
+          <div class="p-6 flex flex-col flex-grow justify-between space-y-4">
+            <div>
+              <h2 class="font-cinzel text-lg text-slate-100 font-medium tracking-wide">The Awakening Sprout</h2>
+              <blockquote class="mt-2 text-sm italic text-amber-200/90 font-light leading-snug border-l-2 border-amber-400/40 pl-3">
+                “In every quiet moment, there is a chance to start completely anew.”
+              </blockquote>
+            </div>
+            <div class="pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs">
+              <span class="text-slate-500 tracking-wider">THEME: SACRED DAWN</span>
+              <button class="open-modal text-amber-300 hover:text-amber-100 flex items-center space-x-1 font-medium transition-colors">
+                <span>Contemplate</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 5 -->
+        <article class="art-card group relative rounded-2xl bg-slate-900/40 border border-slate-800/80 overflow-hidden flex flex-col justify-between"
+                 data-freq="285" data-title="The All-Seeing Witness" data-reflection="Every gesture, choice, and thought is witnessed not for condemnation, but in reverence for the soul's journey. Knowing nothing is lost, walk forward with deliberate purity.">
+          <div class="relative aspect-video overflow-hidden bg-slate-950">
+            <div class="absolute inset-0 bg-cover bg-center image-glow group-hover:scale-105 transition-transform duration-700" 
+                 style="background-image: url('watermarked_img_5772449650906758861.jpg'); background-color: #0f172a;">
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
+            <div class="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-medium tracking-wider uppercase bg-black/60 border border-indigo-400/30 text-indigo-200 backdrop-blur-md">
+              Artifact V
+            </div>
+          </div>
+          <div class="p-6 flex flex-col flex-grow justify-between space-y-4">
+            <div>
+              <h2 class="font-cinzel text-lg text-slate-100 font-medium tracking-wide">The All-Seeing Witness</h2>
+              <blockquote class="mt-2 text-sm italic text-amber-200/90 font-light leading-snug border-l-2 border-amber-400/40 pl-3">
+                “Everything you have ever done was recorded and witnessed.”
+              </blockquote>
+            </div>
+            <div class="pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs">
+              <span class="text-slate-500 tracking-wider">THEME: RECORD OF LIFE</span>
+              <button class="open-modal text-amber-300 hover:text-amber-100 flex items-center space-x-1 font-medium transition-colors">
+                <span>Contemplate</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 6 -->
+        <article class="art-card group relative rounded-2xl bg-slate-900/40 border border-slate-800/80 overflow-hidden flex flex-col justify-between"
+                 data-freq="741" data-title="The Return to the Garden" data-reflection="Man-made architectures, code, and servers will all bow to organic regeneration. Surrender your need to over-compute your fate. Life always reclaims balance.">
+          <div class="relative aspect-video overflow-hidden bg-slate-950">
+            <div class="absolute inset-0 bg-cover bg-center image-glow group-hover:scale-105 transition-transform duration-700" 
+                 style="background-image: url('watermarked_img_11431468267084787455.jpg'); background-color: #0f172a;">
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
+            <div class="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-medium tracking-wider uppercase bg-black/60 border border-indigo-400/30 text-indigo-200 backdrop-blur-md">
+              Artifact VI
+            </div>
+          </div>
+          <div class="p-6 flex flex-col flex-grow justify-between space-y-4">
+            <div>
+              <h2 class="font-cinzel text-lg text-slate-100 font-medium tracking-wide">The Return to the Garden</h2>
+              <blockquote class="mt-2 text-sm italic text-amber-200/90 font-light leading-snug border-l-2 border-amber-400/40 pl-3">
+                “Silence outlasts every algorithm.”
+              </blockquote>
+            </div>
+            <div class="pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs">
+              <span class="text-slate-500 tracking-wider">THEME: RECLAMATION</span>
+              <button class="open-modal text-amber-300 hover:text-amber-100 flex items-center space-x-1 font-medium transition-colors">
+                <span>Contemplate</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </main>
+
+    <footer class="fixed bottom-0 left-0 right-0 z-40 bg-[#05060b]/90 backdrop-blur-lg border-t border-indigo-900/40 px-6 py-3.5">
+      <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center space-x-3">
+          <!-- Pulse Orb synced with 4s inhale, 4s exhale -->
+          <div class="relative w-8 h-8 flex items-center justify-center">
+            <span class="breathing-pulse absolute inset-0 rounded-full bg-gradient-to-r from-amber-400/40 to-indigo-500/50"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-200/90 z-10"></span>
+          </div>
+          <div class="text-left">
+            <div id="breath-status" class="font-cinzel text-xs font-semibold tracking-wider text-amber-200 uppercase">Inhale — Stillness Awakes</div>
+            <div id="breath-timer" class="text-[10px] text-slate-400 font-mono">4.0s remaining</div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3 w-full sm:w-64">
+          <div class="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden border border-slate-700/50">
+            <div id="breath-progress-bar" class="h-full bg-gradient-to-r from-indigo-500 via-amber-300 to-indigo-400 transition-all duration-100" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="text-[11px] text-slate-400 tracking-wider hidden md:block">
+          RESONANCE: <span id="resonance-indicator" class="text-indigo-300 font-mono">STANDBY (432 Hz)</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <div id="contemplation-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="relative w-full max-w-lg bg-[#0a0d17] border border-amber-300/30 rounded-2xl p-6 sm:p-8 shadow-[0_0_60px_rgba(99,102,241,0.25)] space-y-6">
+      <div class="flex justify-between items-start">
+        <div>
+          <span class="text-[11px] font-cinzel text-amber-300/80 tracking-[0.2em] uppercase">Oracle of Stillness</span>
+          <h3 id="modal-title" class="font-cinzel text-2xl text-slate-100 font-normal mt-1">Prompt</h3>
+        </div>
+        <button id="modal-close" class="text-slate-400 hover:text-slate-100 p-1 rounded-lg bg-slate-800/50 border border-slate-700/60">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <p id="modal-reflection" class="text-base text-slate-300 font-light leading-relaxed italic border-l-2 border-indigo-500/60 pl-4">
+          Reflection text
+        </p>
+        <div class="p-4 rounded-xl bg-indigo-950/30 border border-indigo-900/50 text-xs text-indigo-200/90 leading-relaxed">
+          <strong>Daily Awakening Practice:</strong> Close your eyes for 3 breath cycles. Release all sensory simulations. Know that the observer behind your thoughts cannot be captured or diminished.
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button id="modal-complete-btn" class="px-5 py-2 rounded-xl text-xs font-semibold tracking-wider bg-amber-400/20 text-amber-200 border border-amber-300/40 hover:bg-amber-400/30 transition-all uppercase font-cinzel">
+          Return In Stillness
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================
+     *  Ambient Canvas Particles (Subtle Cosmic Dust)
+     * ========================================================= */
+    const canvas = document.getElementById('ambient-canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let particles = [];
+
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.size = Math.random() * 1.6 + 0.4;
+        this.speedX = (Math.random() - 0.5) * 0.2;
+        this.speedY = (Math.random() - 0.5) * 0.2;
+        this.alpha = Math.random() * 0.5 + 0.1;
+      }
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
+          this.reset();
+        }
+      }
+      draw() {
+        ctx.fillStyle = `rgba(199, 210, 254, ${this.alpha})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function initParticles() {
+      resizeCanvas();
+      particles = [];
+      const count = Math.floor(Math.min(width, 1400) / 18);
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, width, height);
+      for (let p of particles) {
+        p.update();
+        p.draw();
+      }
+      requestAnimationFrame(animateParticles);
+    }
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+    });
+
+    initParticles();
+    animateParticles();
+
+    /* =========================================================
+     *  Harmonic Web Audio Synthesizer (432Hz Ambient Engine)
+     * ========================================================= */
+    let audioCtx = null;
+    let masterGain = null;
+    let droneOsc1 = null;
+    let droneOsc2 = null;
+    let bloomOsc = null;
+    let bloomGain = null;
+    let isAudioActive = false;
+
+    function initAudio() {
+      if (audioCtx) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+        masterGain.connect(audioCtx.destination);
+
+        // Sub drone 1 (Root 108Hz octave of 432Hz)
+        droneOsc1 = audioCtx.createOscillator();
+        droneOsc1.type = 'sine';
+        droneOsc1.frequency.setValueAtTime(108, audioCtx.currentTime);
+
+        const droneGain1 = audioCtx.createGain();
+        droneGain1.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        droneOsc1.connect(droneGain1);
+        droneGain1.connect(masterGain);
+        droneOsc1.start();
+
+        // Sub drone 2 with 432Hz warmth
+        droneOsc2 = audioCtx.createOscillator();
+        droneOsc2.type = 'triangle';
+        droneOsc2.frequency.setValueAtTime(216, audioCtx.currentTime);
+
+        const droneGain2 = audioCtx.createGain();
+        droneGain2.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        droneOsc2.connect(droneGain2);
+        droneGain2.connect(masterGain);
+        droneOsc2.start();
+
+        // Reactive Bloom Oscillator
+        bloomOsc = audioCtx.createOscillator();
+        bloomOsc.type = 'sine';
+        bloomOsc.frequency.setValueAtTime(432, audioCtx.currentTime);
+
+        bloomGain = audioCtx.createGain();
+        bloomGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+        bloomOsc.connect(bloomGain);
+        bloomGain.connect(masterGain);
+        bloomOsc.start();
+      } catch (err) {
+        console.warn('Web Audio could not be initialized:', err);
+      }
+    }
+
+    function toggleAudio(forceState) {
+      if (!audioCtx) initAudio();
+      if (!audioCtx) return;
+
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      isAudioActive = forceState !== undefined ? forceState : !isAudioActive;
+
+      const offIcon = document.getElementById('audio-icon-off');
+      const onIcon = document.getElementById('audio-icon-on');
+      const label = document.getElementById('audio-label');
+
+      if (isAudioActive) {
+        masterGain.gain.setTargetAtTime(0.25, audioCtx.currentTime, 0.5);
+        offIcon.classList.add('hidden');
+        onIcon.classList.remove('hidden');
+        label.textContent = '432Hz HARMONIC: ACTIVE';
+        label.classList.add('text-amber-200');
+      } else {
+        masterGain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.4);
+        offIcon.classList.remove('hidden');
+        onIcon.classList.add('hidden');
+        label.textContent = '432Hz HARMONIC: MUTED';
+        label.classList.remove('text-amber-200');
+      }
+    }
+
+    document.getElementById('audio-toggle').addEventListener('click', () => {
+      toggleAudio();
+    });
+
+    // Elevate frequency on card interactions
+    function triggerCardBloom(freq, title) {
+      if (!isAudioActive) return;
+      if (bloomGain && bloomOsc && audioCtx) {
+        bloomOsc.frequency.setTargetAtTime(parseFloat(freq), audioCtx.currentTime, 0.2);
+        bloomGain.gain.setTargetAtTime(0.35, audioCtx.currentTime, 0.25);
+        document.getElementById('resonance-indicator').textContent = `${title.toUpperCase()} (${freq} Hz)`;
+      }
+    }
+
+    function releaseCardBloom() {
+      if (!isAudioActive) return;
+      if (bloomGain && audioCtx) {
+        bloomGain.gain.setTargetAtTime(0.001, audioCtx.currentTime, 0.4);
+        document.getElementById('resonance-indicator').textContent = 'STANDBY (432 Hz)';
+      }
+    }
+
+    /* =========================================================
+     *  Synchronized 4s Inhale / 4s Exhale Breathing Cycle
+     * ========================================================= */
+    const breathStatusEl = document.getElementById('breath-status');
+    const breathTimerEl = document.getElementById('breath-timer');
+    const breathProgressEl = document.getElementById('breath-progress-bar');
+    const breathCycleMs = 8000;
+    const startTime = Date.now();
+
+    function updateBreathingTimer() {
+      const elapsed = (Date.now() - startTime) % breathCycleMs;
+      const isInhaling = elapsed < 4000;
+      const cycleProgress = elapsed / breathCycleMs;
+
+      if (isInhaling) {
+        const remaining = ((4000 - elapsed) / 1000).toFixed(1);
+        breathStatusEl.textContent = 'Inhale — Breathing In Pure Presence';
+        breathTimerEl.textContent = `${remaining}s remaining`;
+        breathProgressEl.style.width = `${(elapsed / 4000) * 100}%`;
+      } else {
+        const remaining = ((8000 - elapsed) / 1000).toFixed(1);
+        breathStatusEl.textContent = 'Exhale — Surrendering The Simulation';
+        breathTimerEl.textContent = `${remaining}s remaining`;
+        breathProgressEl.style.width = `${(1 - (elapsed - 4000) / 4000) * 100}%`;
+      }
+
+      requestAnimationFrame(updateBreathingTimer);
+    }
+    updateBreathingTimer();
+
+    /* =========================================================
+     *  Interactive Hover & Touch-Hold Bindings
+     * ========================================================= */
+    const cards = document.querySelectorAll('.art-card');
+    cards.forEach(card => {
+      const freq = card.dataset.freq;
+      const title = card.dataset.title;
+
+      // Mouse Hover
+      card.addEventListener('mouseenter', () => {
+        triggerCardBloom(freq, title);
+      });
+      card.addEventListener('mouseleave', () => {
+        releaseCardBloom();
+      });
+
+      // Mobile Touch Hold
+      card.addEventListener('touchstart', (e) => {
+        if (!isAudioActive) toggleAudio(true);
+        card.classList.add('active-hold');
+        triggerCardBloom(freq, title);
+      }, { passive: true });
+
+      card.addEventListener('touchend', () => {
+        card.classList.remove('active-hold');
+        releaseCardBloom();
+      });
+    });
+
+    /* =========================================================
+     *  Contemplation Drawer / Modal Handlers
+     * ========================================================= */
+    const modal = document.getElementById('contemplation-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalReflection = document.getElementById('modal-reflection');
+    const modalClose = document.getElementById('modal-close');
+    const modalCompleteBtn = document.getElementById('modal-complete-btn');
+
+    document.querySelectorAll('.open-modal').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const parentCard = btn.closest('.art-card');
+        modalTitle.textContent = parentCard.dataset.title;
+        modalReflection.textContent = `“${parentCard.dataset.reflection}”`;
+        
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.classList.add('opacity-100');
+      });
+    });
+
+    function closeModal() {
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      modal.classList.remove('opacity-100');
+    }
+
+    modalClose.addEventListener('click', closeModal);
+    modalCompleteBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+  </script>
+</body>
+</html>
